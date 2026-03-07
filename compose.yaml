@@ -1,0 +1,62 @@
+services:
+    server:
+        image: php:8.3-apache
+        ports:
+            - "8190:80"
+        volumes:
+            - .:/var/www/html
+        command:
+            - bash
+            - -c
+            - |
+                apt-get update && apt-get install -y unzip libzip-dev && docker-php-ext-install zip &&
+                sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/src|' /etc/apache2/sites-enabled/000-default.conf &&
+                php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" &&
+                php -r "if (hash_file('sha384', 'composer-setup.php') === 'c8b085408188070d5f52bcfe4ecfbee5f727afa458b2573b8eaaf77b3419b0bf2768dc67c86944da1544f06fa544fd47') { echo 'Installer verified'.PHP_EOL; } else { echo 'Installer corrupt'.PHP_EOL; unlink('composer-setup.php'); exit(1); }" &&
+                php composer-setup.php --install-dir=/usr/local/bin --filename=composer &&
+                php -r "unlink('composer-setup.php');" &&
+                composer install &&
+                apache2-foreground
+    db:
+        image: mysql
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: example
+            MYSQL_DATABASE: ${MYSQL_DATABASE:-test_db}
+            MYSQL_USER: ${MYSQL_USER:-user}
+            MYSQL_PASSWORD: ${MYSQL_PASSWORD:-pass}
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+            start_period: 10s
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        ports:
+            - "8192:3306"
+        volumes:
+            - ./.docker/database/volume/data:/var/lib/mysql
+
+    playwright:
+        image: mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble
+        working_dir: /tests
+        volumes:
+            - ./tests/e2e:/tests # mount your project into the container
+            # - ./src:/app
+        depends_on:
+            - server
+            - db
+        environment:
+            - CI=false # Enable UI mode
+        ports:
+            - "9323:9323" # Playwright UI mode port
+        shm_size: 1g # avoid Chromium crashes for large tests
+        tty: true
+        stdin_open: true
+        # Keep container alive for running tests on-demand
+        command:
+            [
+                "bash",
+                "-lc",
+                "npm install && npx playwright install --with-deps && tail -f /dev/null",
+            ]
+

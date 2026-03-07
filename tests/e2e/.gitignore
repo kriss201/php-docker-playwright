@@ -1,0 +1,5 @@
+/test-results/*
+!/test-results/.gitkeep
+/playwright-report/*
+!/playwright-report/.gitkeep
+/node_modules/
