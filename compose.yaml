@@ -1,15 +1,23 @@
 services:
     server:
         image: php:8.3-apache
+        depends_on:
+            db:
+                condition: service_healthy
         ports:
             - "8190:80"
         volumes:
             - .:/var/www/html
+        environment:
+            MYSQL_HOST: db
+            MYSQL_DATABASE: ${MYSQL_DATABASE:-test_db}
+            MYSQL_USER: ${MYSQL_USER:-user}
+            MYSQL_PASSWORD: ${MYSQL_PASSWORD:-pass}
         command:
             - bash
             - -c
             - |
-                apt-get update && apt-get install -y unzip libzip-dev && docker-php-ext-install zip &&
+                apt-get update && apt-get install -y unzip libzip-dev && docker-php-ext-install zip pdo_mysql &&
                 sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/src|' /etc/apache2/sites-enabled/000-default.conf &&
                 php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" &&
                 php -r "if (hash_file('sha384', 'composer-setup.php') === 'c8b085408188070d5f52bcfe4ecfbee5f727afa458b2573b8eaaf77b3419b0bf2768dc67c86944da1544f06fa544fd47') { echo 'Installer verified'.PHP_EOL; } else { echo 'Installer corrupt'.PHP_EOL; unlink('composer-setup.php'); exit(1); }" &&
@@ -17,6 +25,7 @@ services:
                 php -r "unlink('composer-setup.php');" &&
                 composer install &&
                 apache2-foreground
+
     db:
         image: mysql
         restart: always
@@ -35,6 +44,7 @@ services:
             - "8192:3306"
         volumes:
             - ./.docker/database/volume/data:/var/lib/mysql
+            - ./.docker/database/init:/docker-entrypoint-initdb.d
 
     playwright:
         image: mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble
