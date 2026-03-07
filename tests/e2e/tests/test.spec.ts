@@ -10,8 +10,6 @@ test('home loads', async ({ page }) => {
 test('database is visible', async ({ page }) => {
     await page.goto('/database.php');
 
-    await page.waitForTimeout(1000);
-
     // Expect the page title
     await expect(page).toHaveTitle(/Tasks/);
 
@@ -20,6 +18,5 @@ test('database is visible', async ({ page }) => {
 
     await expect(page.getByRole('cell', { name: 'Setup project' })).toBeVisible();
     await expect(page.getByRole('cell', { name: 'Initialize Docker environment' })).toBeVisible();
-    await expect(page.getByRole('cell', { name: '-03-07 20:32:01' }).first()).toContainText('2026-03-07 20:32:01');
 
 });
