@@ -9,19 +9,29 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v4
+      - name: Start PHP server and database
+        run: docker compose up -d server db
+      - name: Wait for PHP server to be ready
+        run: timeout 120 bash -c 'until curl -sf http://localhost:8190 > /dev/null; do sleep 3; done'
+      - uses: actions/setup-node@v4
         with:
           node-version: lts/*
       - name: Install dependencies
+        working-directory: tests/e2e
         run: npm ci
       - name: Install Playwright Browsers
+        working-directory: tests/e2e
         run: npx playwright install --with-deps
       - name: Run Playwright tests
+        working-directory: tests/e2e
+        env:
+          BASE_URL: http://localhost:8190
+          CI: true
         run: npx playwright test
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
           name: playwright-report
-          path: playwright-report/
+          path: tests/e2e/playwright-report/
           retention-days: 30
