@@ -10,6 +10,8 @@ test('home loads', async ({ page }) => {
 test('database is visible', async ({ page }) => {
     await page.goto('/database.php');
 
+    await page.waitForTimeout(1000);
+
     // Expect the page title
     await expect(page).toHaveTitle(/Tasks/);
 
