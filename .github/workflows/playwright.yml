@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v5
       - name: Start PHP server and database elasticsearch
         env:
-          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m -Des.cgroups.hierarchy.override=/"
         run: |
           sudo sysctl -w vm.max_map_count=262144
           mkdir -p .docker/elasticsearch/volume/data
