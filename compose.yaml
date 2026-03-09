@@ -4,6 +4,8 @@ services:
         depends_on:
             db:
                 condition: service_healthy
+            elasticsearch:
+                condition: service_healthy
         ports:
             - "8190:80"
         volumes:
@@ -45,6 +47,18 @@ services:
         volumes:
             - ./.docker/database/volume/data:/var/lib/mysql
             - ./.docker/database/init:/docker-entrypoint-initdb.d
+
+    elasticsearch:
+      image: elasticsearch:7.17.6
+      volumes:
+        - ./.docker/elasticsearch/volume/data:/usr/share/elasticsearch/data
+      environment:
+        ES_JAVA_OPTS: "-Xms4g -Xmx4g"
+        xpack.security.enabled: "false"
+        discovery.type: single-node
+      healthcheck:
+        test: curl --silent http://localhost:9200/_cluster/health?wait_for_status=green > /dev/null || exit 1
+        start_period: 30s
 
     playwright:
         image: mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble
