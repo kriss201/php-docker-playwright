@@ -15,7 +15,7 @@ jobs:
           cat > compose.ci.yml << 'EOF'
           services:
             elasticsearch:
-              image: elasticsearch:8.17.0
+              image: elasticsearch:7.17.28
           EOF
       - name: Start PHP server and database elasticsearch
         env:
