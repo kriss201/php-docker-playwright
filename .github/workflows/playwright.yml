@@ -22,6 +22,7 @@ jobs:
           ES_JAVA_OPTS: "-Xms512m -Xmx512m"
         run: |
           sudo sysctl -w vm.max_map_count=262144
+          echo "PLAYWRIGHT_VERSION=$PLAYWRIGHT_VERSION" 
           mkdir -p .docker/elasticsearch/volume/data
           chmod 777 .docker/elasticsearch/volume/data
           docker compose -f compose.yaml -f compose.ci.yml up -d server db elasticsearch
